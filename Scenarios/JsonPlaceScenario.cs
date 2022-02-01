@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using NBomber;
 using NBomber.CSharp;
 using NBomber.Plugins.Http.CSharp;
+using NBomber.Sinks.InfluxDB;
 
 using NbomberJsonPlaceHolderApi.Models;
 
@@ -39,12 +40,17 @@ namespace NbomberJsonPlaceHolderApi.Scenarios
             });
 
             var scenario = ScenarioBuilder.CreateScenario("JsonPlaceApi", GetPostsById, PostAPost)
-                            .WithLoadSimulations(Simulation.InjectPerSec(rate: 1, TimeSpan.FromSeconds(10)));
+                            .WithLoadSimulations(Simulation.InjectPerSec(rate: 2, TimeSpan.FromSeconds(40)));
+
+            var influxConfig = InfluxDbSinkConfig.Create("http://localhost:8086", database: "default");
+            var influxDb = new InfluxDBSink(influxConfig);
             NBomberRunner
                 .RegisterScenarios(scenario)
-                .WithTestSuite("JsonPlace Example")
-                .WithTestName("Basic Method")
+                .WithTestSuite("reporting")
+                .WithTestName("influx_test")
                 .WithReportFileName("JsonPlaceApi")
+                .WithReportingSinks(new[] {influxDb})
+                .WithReportingInterval(TimeSpan.FromSeconds(100))
                 .Run();
 
 
